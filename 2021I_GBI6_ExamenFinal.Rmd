@@ -150,6 +150,12 @@ Para esta pregunta tiene que utilizar la data ```df_long```.
 
 ```{r}
 # Escriba el código para crear la función tcga_boxplots
+## creamos la funcion tcga plots que genera un grafico de barras y de puntos, en el eje x presenta los genes y en el eje y el nivel de expresión de los 7 genes. 
+tcga_boxplots <- function(dataset) {
+  library(ggplot2)
+  return(ggplot (dataset, aes(x = gen, y = expresion_level, col = gen)) + labs(x="Gen", y = "Expression level")
+         + geom_boxplot() + geom_jitter(size=0.10))
+}
 
 
 ```
@@ -158,13 +164,29 @@ Para esta pregunta tiene que utilizar la data ```df_long```.
 ```{r list_boxplots}
 # Escriba el código para generar la lista. 
 
+## creamos una lista que la definimos como cancertype que guarda los 6 tipos de cancer de estudio 
+cancertype <- list(
+  BRCA <- filter(df_long, dataset == "BRCA"),
+  OV <- filter(df_long, dataset == "OV"),
+  LUSC <- filter(df_long, dataset == "LUSC"),
+  KIPAN <- filter(df_long, dataset == "KIPAN"),
+  KIRP <- filter(df_long, dataset == "KIRP"),
+  UCEC <- filter(df_long, dataset == "UCEC")
+)
+
+## creamos una lista que guardara todos los graficos de cada tipo de cancer utilizando la función apply 
+cancertype_boxplots = lapply(cancertype, function(x) {ggplot(x, aes(dataset, expresion_level, col = dataset)) +
+    geom_boxplot() + theme(legend.position='none') + labs(x = "", y = "Expression level")})
+    
+
 
 ```
 
 ### [0.5 PUNTOS] 2.3 Guarde en el subdirectorio ```result``` el tercer plot de la lista ```cancertype_boxplots``` con el nombre ```boxplot3.png```. La definición de a figura debe ser de 300dpi. 
 ```{r boxplot3}
 # Escriba el código para guardar la tercera figura de la lista. 
-
+cancertype_boxplots[3]
+ggsave("boxplot3.png", width = 6, height = 8, dpi = 300)
 
 ```
 
@@ -174,6 +196,152 @@ Para esta pregunta tiene que utilizar la data ```df_long```.
 ```{r reg_gen_exp}
 # Escriba aquí su función reg_gen_expression
 
+## guardamos una lista de data frames que contiene cada tipo de cancer 
+library(ggplot2)
+dataset_type <- list(
+    BRCA <- filter(df_long, dataset == "BRCA"),
+    OV <- filter(df_long, dataset == "OV"),
+    LUSC <- filter(df_long, dataset == "LUSC"),
+    KIPAN <- filter(df_long, dataset == "KIPAN"),
+    KIRP <- filter(df_long, dataset == "KIRP"),
+    UCEC <- filter(df_long, dataset == "UCEC"), 
+    GAPDH <- filter(df_long, dataset == "GAPDH")
+  )
+  
+## cada lista la pasamos de long a wider para que los 7 genes estan en las columnas 
+plots_cancer <- list (  
+  BRCA_1 <- BRCA %>% group_by(gen) %>% mutate(row = row_number()) %>%
+    tidyr::pivot_wider(names_from = gen, values_from = expresion_level) %>%
+    select(-row),
+  OV_1 <- OV %>% group_by(gen) %>% mutate(row = row_number()) %>%
+    tidyr::pivot_wider(names_from = gen, values_from = expresion_level) %>%
+    select(-row),
+  LUSC_1 <- LUSC %>% group_by(gen) %>% mutate(row = row_number()) %>%
+    tidyr::pivot_wider(names_from = gen, values_from = expresion_level) %>%
+    select(-row),
+  KIPAN_1 <- KIPAN %>% group_by(gen) %>% mutate(row = row_number()) %>%
+    tidyr::pivot_wider(names_from = gen, values_from = expresion_level) %>%
+    select(-row),
+  KIRP_1 <- KIRP %>% group_by(gen) %>% mutate(row = row_number()) %>%
+    tidyr::pivot_wider(names_from = gen, values_from = expresion_level) %>%
+    select(-row),
+  UCEC_1 <- UCEC %>% group_by(gen) %>% mutate(row = row_number()) %>%
+    tidyr::pivot_wider(names_from = gen, values_from = expresion_level) %>%
+    select(-row),
+  GAPH_1 <- UCEC %>% group_by(gen) %>% mutate(row = row_number()) %>%
+    tidyr::pivot_wider(names_from = gen, values_from = expresion_level) %>%
+    select(-row)
+)
+
+
+## creamos la funcion reg_gen_expression que utiliza el parametro gen que indica el gen con el cual se va a comparar con el resto de 6 genes y se va a graficar. 
+reg_gen_expression <- function (gen) {
+  if (gen == "GATA3"){
+    total <- list (
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GATA3, PTEN)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GATA3, XBP1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GATA3, ESR1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GATA3, MUC1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GATA3, FN1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GATA3, GAPDH)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}))
+    }
+  else if (gen == "PTEN"){
+    total <- list (
+      lapply(plots_cancer, function(x) {ggplot(x, aes(PTEN, GATA3)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(PTEN, XBP1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(PTEN, ESR1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(PTEN, MUC1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(PTEN, FN1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(PTEN, GAPDH)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}))
+  }
+  else if (gen == "XBP1"){
+    total <- list (
+      lapply(plots_cancer, function(x) {ggplot(x, aes(XBP1, GATA3)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(XBP1, PTEN)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(XBP1, ESR1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(XBP1, MUC1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(XBP1, FN1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(XBP1, GAPDH)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}))
+  }
+  else if (gen == "ESR1"){
+    total <- list (
+      lapply(plots_cancer, function(x) {ggplot(x, aes(ESR1, GATA3)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(ESR1, PTEN)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(ESR1, XBP1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(ESR1, MUC1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(ESR1, FN1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(ESR1, GAPDH)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}))
+  }
+  else if (gen == "MUC1"){
+    total <- list (
+      lapply(plots_cancer, function(x) {ggplot(x, aes(MUC1, GATA3)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(MUC1, PTEN)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(MUC1, XBP1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(MUC1, ESR1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(MUC1, FN1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(MUC1, GAPDH)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}))
+  }
+  else if (gen == "FN1"){
+    total <- list (
+      lapply(plots_cancer, function(x) {ggplot(x, aes(FN1, GATA3)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(FN1, PTEN)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(FN1, XBP1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(FN1, ESR1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(FN1, MUC1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(FN1, GAPDH)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}))
+  }
+  else if (gen == "GAPDH"){
+    total <- list (
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GAPDH, GATA3)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GAPDH, PTEN)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GAPDH, XBP1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GAPDH, ESR1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GAPDH, MUC1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}), 
+      lapply(plots_cancer, function(x) {ggplot(x, aes(GAPDH, FN1)) + 
+          geom_point() + geom_smooth(method='lm', formula= y~x)}))
+  }
+}
 
 ```
 
@@ -181,6 +349,8 @@ Para esta pregunta tiene que utilizar la data ```df_long```.
 ### [0.5 PUNTOS] 2.5. Utilizando la función ```lapply()``` genera la lista ```reg_genplots``` con las gráficas para cada par de genes posibles. Recuerde que tiene 7 tipos de genes, se debe tener todas las combinaciones posibles por pares de genes (combinatoria sin repetición).
 ```{r list_regplots}
 # Escriba el código para generar la lista. 
+## en este caso se selecciono el gen GATA3, el cual se va a comparar con los 6 genes restantes en los 6 data sets de analisis 
+graficos_cancer <- reg_gen_expression("GATA3") 
 
 ```
 
@@ -188,6 +358,10 @@ Para esta pregunta tiene que utilizar la data ```df_long```.
 ### [0.5 PUNTOS] 2.6. Guarde en el subdirectorio ```result``` el onceavo plot de la lista ```reg_genplots``` con el nombre ```regresion11.pdf```. La definición de a figura debe ser de 300dpi. 
 ```{r reg11}
 # Escriba el código para guardar el onceavo plot. 
+graficos_cancer[[5]][[2]] ## la lista graficos cancer contiene las 6 combinaciones del gen GATA3 por los 7 datasets, la seguna dato indica el data set y el primero la combinacion del par de gen
+
+ggsave("regresion11.pdf", width = 6, height = 8, dpi = 300)
+
 
 ```
 
@@ -196,7 +370,8 @@ Para esta pregunta tiene que utilizar la data ```df_long```.
 
 ```{tex}
 # Esciba aquí su intepretación
-
+## En el grafico de boxplot3 se puede observar un diagrama de cajas del tipo de cancer LUSC, el rango de los valores de expresión este entre (-5, 3), la mediana es -0,9 
+## En el grafico regresion11 se puede observar un diagrama de puntos del gen GATA3 en el eje x y el gen FN1 en el eje y. Los datos son del cancer de ovarios ("[[2]]"). El grafico de regresión indica que es positivo y en los puntos no presenta una relación clara entre la expresión de ambos genes. 
 ```
 
 ## 3. CONTROL DE LA VERSIÓN [1 PUNTO]. Se verficará en ell repositorio de GitHub. 
